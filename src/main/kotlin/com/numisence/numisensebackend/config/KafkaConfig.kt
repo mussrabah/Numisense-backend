@@ -1,17 +1,40 @@
 package com.numisence.numisensebackend.config
 
 import org.apache.kafka.clients.admin.NewTopic
+import org.apache.kafka.clients.producer.ProducerConfig
+import org.apache.kafka.common.serialization.StringSerializer
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.TopicBuilder
+import org.springframework.kafka.core.DefaultKafkaProducerFactory
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.ProducerFactory
 
 @Configuration
-class KafkaConfig {
+class KafkaConfig(
+    @Value("\${spring.kafka.bootstrap-servers:localhost:9092}")
+    private val bootstrapServers: String
+) {
 
-    /**
-     * Topic for incoming high-frequency sensor data.
-     * We use 3 partitions to allow for future horizontal scaling of consumer microservices.
-     */
+    // 1. Define the Producer Factory with standard String serializers
+    @Bean
+    fun producerFactory(): ProducerFactory<String, String> {
+        val configProps = mapOf(
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java
+        )
+        return DefaultKafkaProducerFactory(configProps)
+    }
+
+    // 2. Explicitly expose the KafkaTemplate Bean for Dependency Injection
+    @Bean
+    fun kafkaTemplate(): KafkaTemplate<String, String> {
+        return KafkaTemplate(producerFactory())
+    }
+
+    // 3. Existing Topic Definitions
     @Bean
     fun telemetryInTopic(): NewTopic {
         return TopicBuilder.name("telemetry.in")
@@ -20,9 +43,6 @@ class KafkaConfig {
             .build()
     }
 
-    /**
-     * Topic for outgoing commands to physical/simulated IoT actuators (e.g., water pumps).
-     */
     @Bean
     fun actuatorOutTopic(): NewTopic {
         return TopicBuilder.name("actuator.out")

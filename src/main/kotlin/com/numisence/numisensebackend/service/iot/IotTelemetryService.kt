@@ -5,8 +5,10 @@ import com.numisence.numisensebackend.domain.iot.Telemetry
 import com.numisence.numisensebackend.repository.iot.DeviceActionLogRepository
 import com.numisence.numisensebackend.repository.iot.IotDeviceRepository
 import com.numisence.numisensebackend.repository.iot.TelemetryRepository
+import com.numisence.numisensebackend.service.notification.NotificationService
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional
 class IotTelemetryService(
     private val telemetryRepository: TelemetryRepository,
     private val iotDeviceRepository: IotDeviceRepository,
-    private val deviceActionLogRepository: DeviceActionLogRepository
+    private val deviceActionLogRepository: DeviceActionLogRepository,
+    private val notificationService: NotificationService,
+    private val kafkaTemplate: KafkaTemplate<String, String>
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -58,16 +62,27 @@ class IotTelemetryService(
         if (moistureLevel < optimalMoistureMin) {
             log.warn("Moisture level {} is below threshold {}. Triggering AI_AUTO Irrigation.", moistureLevel, optimalMoistureMin)
 
+            val device = iotDeviceRepository.findById(deviceId).orElseThrow()
+
             // Log the action to the database for audit and dashboard reporting
             val actionLog = DeviceActionLog(
-                device = iotDeviceRepository.getReferenceById(deviceId),
+                device = device,
                 actionType = "TURN_ON",
                 triggeredBy = "AI_AUTO"
             )
             deviceActionLogRepository.save(actionLog)
 
-            // TODO: In Phase 4/5, push a command back out to Kafka topic 'actuator.out'
-            // TODO: In Phase 4/5, push a WebSocket alert to the KMP Mobile App
+            // Phase 4 Complete: Push a command back out to Kafka topic 'actuator.out'
+            val actuatorPayload = """{"macAddress":"${device.macAddress}", "command":"TURN_ON", "value": 100}"""
+            kafkaTemplate.send("actuator.out", actuatorPayload)
+
+            // Phase 4 Complete: Push a WebSocket alert to the KMP Mobile App
+            if (device.farmZone != null) {
+                notificationService.sendActuatorAlert(
+                    farmZoneId = device.farmZone!!.id!!,
+                    message = "Warning: Moisture level critically low ($moistureLevel%). Water Pump [${device.macAddress}] activated automatically."
+                )
+            }
         }
     }
 }
