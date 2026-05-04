@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 1. PostgreSQL with PostGIS extension
   postgres:
@@ -17,7 +15,7 @@ services:
 
   # 2. Apache Kafka (KRaft mode - No Zookeeper)
   kafka:
-    image: bitnami/kafka:3.7.0
+    image: confluentinc/cp-kafka:7.6.0
     container_name: numiterra-kafka
     ports:
       - "9092:9092"
@@ -31,7 +29,7 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
     volumes:
-      - numiterra-kafka-data:/bitnami/kafka
+      - numiterra-kafka-data:/var/lib/kafka/data
     restart: unless-stopped
 
   # 3. MinIO (Local S3 compatible storage for images)

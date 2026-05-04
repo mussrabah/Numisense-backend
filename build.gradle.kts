@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.spring") version "2.2.21"
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
+    kotlin("plugin.jpa") version "2.2.21"
 }
 
 group = "com.numisence"
@@ -43,7 +44,7 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
 
     // Hibernate Spatial (Crucial for PostGIS support)
-    implementation("org.hibernate.orm:hibernate-spatial:6.4.4.Final")
+    implementation("org.hibernate.orm:hibernate-spatial")
 
     // Event Streaming (Kafka)
     implementation("org.springframework.kafka:spring-kafka")
@@ -57,6 +58,7 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:kafka")
+    implementation(kotlin("stdlib"))
 }
 
 kotlin {
