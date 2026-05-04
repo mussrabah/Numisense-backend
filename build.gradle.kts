@@ -32,6 +32,7 @@ dependencies {
     // Security (JWT & Spring Security)
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 
@@ -48,6 +49,13 @@ dependencies {
 
     // Event Streaming (Kafka)
     implementation("org.springframework.kafka:spring-kafka")
+
+    //Amazon S3
+    implementation(platform("software.amazon.awssdk:bom:2.25.0"))
+
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:auth")
+    implementation("software.amazon.awssdk:regions")
 
     // Testing
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.8"))
