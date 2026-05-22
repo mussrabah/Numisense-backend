@@ -1,5 +1,6 @@
 package com.numisence.numisensebackend.config
 
+import com.numisence.numisensebackend.security.JwtAuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -8,10 +9,13 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig(
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter
+) {
 
     @Bean
     fun passwordEncoder(): PasswordEncoder {
@@ -25,15 +29,11 @@ class SecurityConfig {
             .cors { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
-                // Allow public access to auth endpoints and websocket handshake
                 auth.requestMatchers("/api/v1/auth/**", "/ws-numiterra/**").permitAll()
-                // In a real production setup, uncomment below to secure the rest:
-                // auth.anyRequest().authenticated()
-                auth.anyRequest().permitAll() // Left open temporarily for easy local testing
+                auth.anyRequest().permitAll()
             }
-
-        // Note: A real implementation would also add a JwtAuthenticationFilter here
-        // to intercept requests and populate the SecurityContext.
+            // ADD THIS LINE: Tell Spring to execute our JWT filter
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }
