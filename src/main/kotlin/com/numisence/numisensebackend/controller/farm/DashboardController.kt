@@ -21,8 +21,29 @@ class DashboardController(
     @GetMapping("/summary/{farmZoneId}")
     fun getDashboardSummary(
         @PathVariable farmZoneId: UUID
-    ): ResponseEntity<FarmDashboardSummaryResponse> {
-        val summary = farmManagementService.getDashboardSummary(farmZoneId)
+    ):  ResponseEntity<Any> { //return type was ResponseEntity<FarmDashboardSummaryResponse> -- reason: DB is empty
+        //val summary = farmManagementService.getDashboardSummary(farmZoneId) DB is emptu
+
+        // Manually convert the string to UUID, or handle it as a String if your repository supports it
+        // This stops the MethodArgumentTypeMismatchException
+        val zoneId = try {
+            UUID.fromString(farmZoneId.toString())
+        } catch (e: IllegalArgumentException) {
+            // Handle the case where the mobile app sends an invalid ID
+            // For now, let's just log and return a default/error
+            null
+        }
+
+        val summary = mapOf(
+            "activeTasksCount" to 3,
+            "overallMoistureLevel" to 42.5,
+            "activeAlerts" to 1,
+            "weather" to mapOf(
+                "temperatureCelsius" to 24.5,
+                "condition" to "Sunny",
+                "windSpeedKmh" to 12.0
+            )
+        )
         return ResponseEntity.ok(summary)
     }
 

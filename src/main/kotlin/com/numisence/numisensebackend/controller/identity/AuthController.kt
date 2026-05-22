@@ -35,7 +35,11 @@ class AuthController(
         val token = jwtService.generateToken(savedFarmer.email, savedFarmer.role, savedFarmer.id.toString())
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
-            AuthResponse(token = token, userId = savedFarmer.id.toString())
+            AuthResponse(
+                token = token,
+                userId = savedFarmer.id.toString(),
+                userName = savedFarmer.firstName
+            )
         )
     }
 
@@ -50,7 +54,12 @@ class AuthController(
 
         val token = jwtService.generateToken(farmer.email, farmer.role, farmer.id.toString())
 
-        return ResponseEntity.ok(AuthResponse(token = token, userId = farmer.id.toString()))
+        return ResponseEntity.ok(AuthResponse(
+                token = token,
+                userId = farmer.id.toString(),
+                userName = farmer.firstName
+            )
+        )
     }
 }
 
@@ -59,4 +68,4 @@ data class RegisterRequest(
     val firstName: String, val lastName: String, val email: String, val password: String
 )
 data class LoginRequest(val email: String, val password: String)
-data class AuthResponse(val token: String, val userId: String)
+data class AuthResponse(val token: String, val userId: String, val userName: String)
